@@ -1,53 +1,70 @@
 import maya.cmds as cmds
 import datetime
 
-# Method for printing log out
-def log(msg, level = "info"):
-
-    # 1. Time Prefix
-    timestamp = datetime.datetime.now().strftime("%H:%M:%S")
-    formatted = "[{}][{}] {}".format(timestamp, level, msg)
-    
-    # Try: Add word at scrollField(log page)
-    # Else: Just print()
-    try:
-        prev = cmds.scrollField("logField", q = True, text = True)
-        cmds.scrollField("logField", e = True, text = prev + msg + "\n")
-    except:
-        print(msg)
+class SceneCleanerUI:
 
 
-
-# Method activates right after click
-def on_button_click(*args):
-    log("Hello clicked!")
-
-def on_button_warning(*args):
-    log("This is a warning!", level = "WARN")
-
-def on_button_error(*args):
-    log("Something went wrong!", level = "ERROR")
+    def __init__(self):
+        self.window = "SceneCleanerUI"
+        self.log_field = "logField"
+        self.build()
 
 
-# Method generates UI
-def create_ui():
-    if cmds.window("TestUI", exists = True):
-        cmds.deleteUI("TestUI")
+    # -------------------------------------------
+    # LOGGING SYSTEM
 
-    # Generating Window/Layout
-    window = cmds.window("TestUI", title = "Test UI", widthHeight = (350,250))
-    cmds.columnLayout(adjustableColumn=True)
+    def log(self, message, level = "INFO"):
 
-    # Button
-    cmds.button(label = "Log Info", command = on_button_click)
-    cmds.button(label = "Log Warning", command = on_button_warning)
-    cmds.button(label = "Log Error", command = on_button_error)
+        # 1. Time Prefix
+        timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+        formatted = f"[{timestamp}][{level}] {message}"
+        
+        # Try: Add word at scrollField(log page)
+        # Else: If there's no UI, print with console
+        try:
+            cmds.scrollField(self.log_field, e = True, insertText = formatted + "\n")
+            cmds.scrollField(self.log_field, e = True, scrollBottom = True)
+        except Exception:
+            print(formatted)
 
-    cmds.separator(height = 10, style = "in")
 
-    # Log page
-    cmds.scrollField("logField", editable = False, wordWrap = True, height = 150)
 
-    cmds.showWindow(window)
-    
-create_ui()
+    # -------------------------------------------
+    # CALLBACK FUNCTIONS
+
+    def on_info(*_):
+        self.log("Hello clicked!")
+
+    def on_warn(*_):
+        self.log("This is a warning!", level = "WARN")
+
+    def on_error(*_):
+        self.log("Something went wrong!", level = "ERROR")
+
+
+
+    # -------------------------------------------------------
+    # BUILD UI
+
+    def create_ui(self):
+        if cmds.window(self.window, exists = True):
+            cmds.deleteUI(self.window)
+
+        # Generating Window/Layout
+        cmds.window(self.window, title = "Scene Cleaner 2.0", widthHeight = (350, 260))
+        cmds.columnLayout(adjustableColumn = True)
+
+        # Buttons
+        cmds.button(label = "Log Info", command = self.on_info)
+        cmds.button(label = "Log Warning", command = self.on_warn)
+        cmds.button(label = "Log Error", command = self.on_error)
+
+        cmds.separator(height = 10, style = "in")
+
+        # Log Field
+        cmds.scrollField(self.log_field, editable = False, wordWrap = True, height = 150)
+
+        cmds.showWindow(self.window)
+
+
+    create_ui()
